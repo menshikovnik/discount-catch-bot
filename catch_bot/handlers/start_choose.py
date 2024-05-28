@@ -22,7 +22,7 @@ class AddProduct(StatesGroup):
     product_vc = State()
 
 
-@router.message(Command("start"))  # [2]
+@router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     username = html.bold(html.quote(message.from_user.username))
@@ -65,7 +65,7 @@ async def add_product(message: types.Message, state: FSMContext):
     try:
         price = price_parser.price_parse(vc)
         url = s.tinyurl.short(price_parser.get_cur_url().strip())
-        username = message.from_user.username
+        username = get_username(message)
         database.add_product(username, vc, price)
         await message.reply(f"Товар по артикулу {vc} успешно добавлен!\n\n"
                             f"Цена данного товара: {price}" + "р\n" +
@@ -77,6 +77,24 @@ async def add_product(message: types.Message, state: FSMContext):
         await msg.answer("Введен неверный артикул, попробуйте еще раз")
     await state.clear()
 
-    @router.shutdown
-    async def on_shutdown():
-        database.close_connection()
+
+@router.message(F.text.lower() == "мои товары")
+async def get_product(message: types.Message):
+    username = get_username(message)
+    products = database.get_all_products(username)
+    response_message = format_products(products)
+    await message.answer(response_message, parse_mode=ParseMode.HTML)
+
+
+def format_products(products):
+    if not products:
+        return "У вас нет добавленных товаров."
+    product_message = "Ваши товары:\n"
+    for article, product_price in products:
+        product_message += f"- Артикул: {article}, Цена: {product_price} руб.\n"
+    return product_message
+
+
+def get_username(message):
+    username = message.from_user.username
+    return username

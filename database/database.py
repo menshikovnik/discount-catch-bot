@@ -14,16 +14,17 @@ conn = psycopg2.connect(
 )
 
 
-def add_product(username, article, price):
+def add_product(username, article, price, url, name_of_product):
     with conn.cursor() as cur:
-        cur.execute("INSERT INTO user_products (username, article, price) VALUES (%s, %s, %s)",
-                    (username, article, price))
+        cur.execute("INSERT INTO user_products (username, article, price, url, name_of_product) VALUES (%s, %s, %s, "
+                    "%s, %s)",
+                    (username, article, price, url, name_of_product))
         conn.commit()
 
 
 def get_all_products(username):
     with conn.cursor() as cur:
-        cur.execute("SELECT article, price FROM user_products WHERE username=%s", (username,))
+        cur.execute("SELECT article, price, name_of_product, url FROM user_products WHERE username=%s", (username,))
         return cur.fetchall()
 
 

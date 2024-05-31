@@ -14,6 +14,7 @@ from catch_bot.bot import bot
 from aiogram.utils.markdown import hide_link
 from database import database
 from aiogram import html
+from scripts.price_parser import Product
 
 router = Router()
 
@@ -29,7 +30,7 @@ async def cmd_start(message: Message, state: FSMContext):
     if username is None:
         await message.answer("Для продолжения укажите имя пользователя в настройках Telegram")
     else:
-        await message.answer(f"Hello, {username} это бот "
+        await message.answer(f"Hello, {username}, это бот "
                              f"для ловли скидок на маркетплейсе Ozon\n\n"
                              "<b>Выберите одну из команд</b>\n\n"
                              "/menu - Меню\n"
@@ -63,12 +64,14 @@ async def add_product(message: types.Message, state: FSMContext):
     msg = await message.answer("Загрузка...")
     s = pyshorteners.Shortener()
     try:
-        price = price_parser.price_parse(vc)
-        url = s.tinyurl.short(price_parser.get_cur_url().strip())
+        product = Product(vc)
+        product_info = product.display_info()
+        url = s.tinyurl.short(product_info['url'].strip())
         username = get_username(message)
-        database.add_product(username, vc, price)
+        database.add_product(username, vc, product_info['price'], url, product_info['name'])
         await message.reply(f"Товар по артикулу {vc} успешно добавлен!\n\n"
-                            f"Цена данного товара: {price}" + "р\n" +
+                            f"Имя товара: {product_info['name']}\n"
+                            f"Цена данного товара: {product_info['price']}" + "р\n" +
                             hide_link(url),
                             parse_mode=ParseMode.HTML)
         await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
@@ -90,8 +93,9 @@ def format_products(products):
     if not products:
         return "У вас нет добавленных товаров."
     product_message = "Ваши товары:\n"
-    for article, product_price in products:
-        product_message += f"- Артикул: {article}, Цена: {product_price} руб.\n"
+    for article, product_price, product_name, product_url in products:
+        product_message += (f"- Артикул: {article}, Имя: {product_name}, "
+                            f"Цена: {product_price} руб., Ссылка: {product_url}\n")
     return product_message
 
 

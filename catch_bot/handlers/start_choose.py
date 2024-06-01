@@ -8,7 +8,6 @@ from aiogram.filters.state import State
 from aiogram.filters.state import StatesGroup
 from aiogram.fsm.context import FSMContext
 from selenium.common import NoSuchElementException
-from scripts import price_parser
 from catch_bot.keyboards.for_start import get_choose_kb
 from catch_bot.bot import bot
 from aiogram.utils.markdown import hide_link
@@ -62,11 +61,11 @@ async def cancel(message: types.Message):
 async def add_product(message: types.Message, state: FSMContext):
     vc = message.text
     msg = await message.answer("Загрузка...")
-    s = pyshorteners.Shortener()
+    pyshorteners.Shortener()
     try:
         product = Product(vc)
         product_info = product.display_info()
-        url = s.tinyurl.short(product_info['url'].strip())
+        url = product_info['url'].strip()
         username = get_username(message)
         database.add_product(username, vc, product_info['price'], url, product_info['name'])
         await message.reply(f"Товар по артикулу {vc} успешно добавлен!\n\n"
@@ -94,8 +93,8 @@ def format_products(products):
         return "У вас нет добавленных товаров."
     product_message = "Ваши товары:\n"
     for article, product_price, product_name, product_url in products:
-        product_message += (f"- Артикул: {article}, Имя: {product_name}, "
-                            f"Цена: {product_price} руб., Ссылка: {product_url}\n")
+        product_message += (f"- {html.bold('Артикул')}: {article}, {html.bold('Имя')}: {product_name}, "
+                            f"{html.bold('Цена')}: {product_price} руб., {html.bold('Ссылка')}: {product_url}\n\n")
     return product_message
 
 

@@ -14,6 +14,7 @@ from aiogram.utils.markdown import hide_link
 from database import database
 from aiogram import html
 from scripts.price_parser import Product
+from database.database import save_chat_id
 
 router = Router()
 
@@ -25,11 +26,14 @@ class AddProduct(StatesGroup):
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
-    username = html.bold(html.quote(message.from_user.username))
+    username = message.from_user.username
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    await save_chat_id(user_id, chat_id, username)
     if username is None:
         await message.answer("Для продолжения укажите имя пользователя в настройках Telegram")
     else:
-        await message.answer(f"Hello, {username}, это бот "
+        await message.answer(f"Hello, {html.bold(html.quote(username))}, это бот "
                              f"для ловли скидок на маркетплейсе Ozon\n\n"
                              "<b>Выберите одну из команд</b>\n\n"
                              "/menu - Меню\n"
@@ -61,13 +65,13 @@ async def cancel(message: types.Message):
 async def add_product(message: types.Message, state: FSMContext):
     vc = message.text
     msg = await message.answer("Загрузка...")
-    pyshorteners.Shortener()
+    s = pyshorteners.Shortener()
     try:
         product = Product(vc)
         product_info = product.display_info()
-        url = product_info['url'].strip()
+        url = s.tinyurl.short(product_info['url'].strip())
         username = get_username(message)
-        database.add_product(username, vc, product_info['price'], url, product_info['name'])
+        await database.add_product(username, vc, product_info['price'], url, product_info['name'])
         await message.reply(f"Товар по артикулу {vc} успешно добавлен!\n\n"
                             f"Имя товара: {product_info['name']}\n"
                             f"Цена данного товара: {product_info['price']}" + "р\n" +

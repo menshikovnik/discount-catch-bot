@@ -42,7 +42,7 @@ class OzonParser:
             element.send_keys(Keys.ENTER)
             time.sleep(2)
 
-            product_divs = find_elements_safe(self.driver, By.CSS_SELECTOR, "div.a8b.ba9.ac.w8i_23")
+            product_divs = find_elements_safe(self.driver, By.CSS_SELECTOR, "div.a8b.ba9.ac.i0x_23")
             if product_divs:
                 first_product_div = product_divs[0]
                 first_span = find_element_safe(first_product_div, By.CSS_SELECTOR, "span.tsBody500Medium")
@@ -51,7 +51,7 @@ class OzonParser:
 
             self.current_url = self.driver.current_url
 
-            html_price = find_element_safe(self.driver, By.CSS_SELECTOR, 'span.mm4_27.m4m_27.nm0_27')
+            html_price = find_element_safe(self.driver, By.CSS_SELECTOR, 'span.mm5_27.m5m_27.mn1_27')
             html_code = html_price.get_attribute('outerHTML')
             soup = BeautifulSoup(html_code, 'html.parser')
             price_string = soup.get_text()
@@ -59,13 +59,15 @@ class OzonParser:
             number_string = ''.join(match)
             self.price = int(number_string)
 
-            html_name = find_element_safe(self.driver, By.CSS_SELECTOR, 'h1.mn3_27.tsHeadline550Medium')
+            html_name = find_element_safe(self.driver, By.CSS_SELECTOR, 'h1.nm3_27.tsHeadline550Medium')
             self.product_name = html_name.get_attribute('innerText').strip()
 
             self.driver.close()
             self.driver.quit()
         except NoSuchElementException as e:
             print(f"Error: {e}")
+            self.driver.close()
+            self.driver.quit()
 
     def get_price(self):
         return self.price

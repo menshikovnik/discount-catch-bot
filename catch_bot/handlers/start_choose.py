@@ -87,7 +87,7 @@ async def add_product(message: types.Message, state: FSMContext):
 @router.message(F.text.lower() == "мои товары")
 async def get_product(message: types.Message):
     username = get_username(message)
-    products = database.get_all_products(username)
+    products = await database.get_all_products(username)
     response_message = format_products(products)
     await message.answer(response_message, parse_mode=ParseMode.HTML)
 

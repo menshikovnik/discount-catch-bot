@@ -75,7 +75,7 @@ async def get_all_products_to_monitor():
     conn = await create_connection()
     try:
         result = await conn.fetch(
-            "SELECT id, username, article, price FROM user_products"
+            "SELECT id, username, article, price, url FROM user_products"
         )
         return result
     finally:

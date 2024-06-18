@@ -5,9 +5,9 @@ from scripts.price_parser import Product
 
 
 async def check_product(product):
-    db_id, username, article, db_price = product
+    db_id, username, article, db_price, db_url = product
 
-    product_info = await Product.fetch_product_details(article)
+    product_info = await Product.fetch_product_details(article, False, db_url)
 
     if product_info.price < db_price:
         await update_product_price(article, product_info.price)

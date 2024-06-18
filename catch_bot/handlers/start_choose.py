@@ -8,7 +8,7 @@ from aiogram.filters.state import State
 from aiogram.filters.state import StatesGroup
 from aiogram.fsm.context import FSMContext
 from selenium.common import NoSuchElementException
-from catch_bot.keyboards.for_start import get_choose_kb
+from catch_bot.keyboards.for_start import get_choose_kb, get_add_choose_kb
 from catch_bot.bot import bot
 from aiogram.utils.markdown import hide_link
 from database import database
@@ -21,6 +21,8 @@ router = Router()
 
 class AddProduct(StatesGroup):
     product_vc = State()
+    product_url = State()
+    product = State()
 
 
 @router.message(Command("start"))
@@ -49,6 +51,22 @@ async def start_menu(message: Message):
 
 @router.message(F.text.lower() == "добавить товар")
 async def input_vc(message: types.Message, state: FSMContext):
+    await message.answer("Выберите каким способом вам удобнее добавить товар\n"
+                         f"{html.bold(html.quote('Внимание!'))}, при добавлении по артикулу,"
+                         f" в случае нескольких товаров"
+                         f"по одному и тому же артикулу, добавится первый в списке.", reply_markup=get_add_choose_kb(),
+                         parse_mode=ParseMode.HTML)
+    await state.set_state(AddProduct.product)
+
+
+@router.message(F.text.lower() == "добавить товар по ссылке", AddProduct.product)
+async def input_product_url(message: types.Message, state: FSMContext):
+    await message.answer("Введите ссылку", reply_markup=None)
+    await state.set_state(AddProduct.product_url)
+
+
+@router.message(F.text.lower() == "добавить товар по артикулу", AddProduct.product)
+async def input_product_vc(message: types.Message, state: FSMContext):
     await message.answer("Введите артикул", reply_markup=None)
     await state.set_state(AddProduct.product_vc)
 
@@ -67,12 +85,33 @@ async def add_product(message: types.Message, state: FSMContext):
     msg = await message.answer("Загрузка...")
     s = pyshorteners.Shortener()
     try:
-        product = Product(vc)
+        product = Product(vc, True, None)
         product_info = product.display_info()
         url = s.tinyurl.short(product_info['url'].strip())
         username = get_username(message)
         await database.add_product(username, vc, product_info['price'], url, product_info['name'])
         await message.reply(f"Товар по артикулу {vc} успешно добавлен!\n\n"
+                            f"Имя товара: {product_info['name']}\n"
+                            f"Цена данного товара: {product_info['price']}" + "р\n" +
+                            hide_link(url),
+                            parse_mode=ParseMode.HTML)
+        await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
+    except NoSuchElementException:
+        await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
+        await msg.answer("Введен неверный артикул, попробуйте еще раз")
+    await state.clear()
+
+
+@router.message(AddProduct.product_url)
+async def add_product_url(message: types.Message, state: FSMContext):
+    url = message.text
+    msg = await message.answer("Загрузка...")
+    try:
+        product = Product(None, False, url)
+        product_info = product.display_info()
+        username = get_username(message)
+        await database.add_product(username, product_info['art'], product_info['price'], url, product_info['name'])
+        await message.reply(f"Товар по ссылке {url} успешно добавлен!\n\n"
                             f"Имя товара: {product_info['name']}\n"
                             f"Цена данного товара: {product_info['price']}" + "р\n" +
                             hide_link(url),

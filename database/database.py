@@ -96,5 +96,34 @@ async def update_product_price(product_id, new_price):
         await conn.close()
 
 
+async def delete_product(product_art, username):
+    conn = await create_connection()
+    try:
+        async with conn.transaction():
+            await conn.execute(
+                "DELETE FROM user_products WHERE article = $1 AND username = $2",
+                product_art, username
+            )
+    except Exception as e:
+        print(f"Error deleting product: {e}")
+    finally:
+        await conn.close()
+
+
+async def get_name_of_product(product_art, username):
+    conn = await create_connection()
+    try:
+        async with conn.transaction():
+            result = await conn.fetchval(
+                "SELECT name_of_product FROM user_products WHERE article = $1 AND username = $2",
+                product_art, username
+            )
+            return result
+    except Exception as e:
+        print(f"Error getting name_of_product: {e}")
+    finally:
+        await conn.close()
+
+
 async def close_connection(conn):
     await conn.close()

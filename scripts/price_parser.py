@@ -76,7 +76,8 @@ class OzonParser:
         html_name = find_element_safe(self.driver, By.CSS_SELECTOR, 'h1.nm3_27.tsHeadline550Medium')
         self.product_name = html_name.get_attribute('innerText').strip()
 
-        article_element = find_element_safe(self.driver, By.CSS_SELECTOR, 'button[data-widget="webDetailSKU"] .ga14-a2.tsBodyControl400Small')
+        article_element = find_element_safe(self.driver, By.CSS_SELECTOR, 'button[data-widget="webDetailSKU"] '
+                                                                          '.ga14-a2.tsBodyControl400Small')
 
         article_text = article_element.text
         article_number = article_text.split(": ")[1]

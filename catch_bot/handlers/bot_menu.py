@@ -19,9 +19,10 @@ from database.database import save_chat_id
 router = Router()
 
 
-class AddProduct(StatesGroup):
+class ProductActions(StatesGroup):
     product_vc = State()
     product_url = State()
+    product_remove = State()
     product = State()
 
 
@@ -52,23 +53,23 @@ async def start_menu(message: Message):
 @router.message(F.text.lower() == "добавить товар")
 async def input_vc(message: types.Message, state: FSMContext):
     await message.answer("Выберите каким способом вам удобнее добавить товар\n"
-                         f"{html.bold(html.quote('Внимание!'))}, при добавлении по артикулу,"
+                         f"{html.bold(html.quote('Внимание!'))} При добавлении по артикулу,"
                          f" в случае нескольких товаров"
                          f"по одному и тому же артикулу, добавится первый в списке.", reply_markup=get_add_choose_kb(),
                          parse_mode=ParseMode.HTML)
-    await state.set_state(AddProduct.product)
+    await state.set_state(ProductActions.product)
 
 
-@router.message(F.text.lower() == "добавить товар по ссылке", AddProduct.product)
+@router.message(F.text.lower() == "добавить товар по ссылке", ProductActions.product)
 async def input_product_url(message: types.Message, state: FSMContext):
     await message.answer("Введите ссылку", reply_markup=None)
-    await state.set_state(AddProduct.product_url)
+    await state.set_state(ProductActions.product_url)
 
 
-@router.message(F.text.lower() == "добавить товар по артикулу", AddProduct.product)
+@router.message(F.text.lower() == "добавить товар по артикулу", ProductActions.product)
 async def input_product_vc(message: types.Message, state: FSMContext):
     await message.answer("Введите артикул", reply_markup=None)
-    await state.set_state(AddProduct.product_vc)
+    await state.set_state(ProductActions.product_vc)
 
 
 @router.message(F.text.lower() == "отмена")
@@ -79,7 +80,7 @@ async def cancel(message: types.Message):
     await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
 
 
-@router.message(AddProduct.product_vc)
+@router.message(ProductActions.product_vc)
 async def add_product(message: types.Message, state: FSMContext):
     vc = message.text
     msg = await message.answer("Загрузка...")
@@ -102,7 +103,7 @@ async def add_product(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-@router.message(AddProduct.product_url)
+@router.message(ProductActions.product_url)
 async def add_product_url(message: types.Message, state: FSMContext):
     url = message.text
     msg = await message.answer("Загрузка...")
@@ -129,6 +130,26 @@ async def get_product(message: types.Message):
     products = await database.get_all_products(username)
     response_message = format_products(products)
     await message.answer(response_message, parse_mode=ParseMode.HTML)
+
+
+@router.message(F.text.lower() == "удалить товар")
+async def remove_product_menu(message: types.Message, state: FSMContext):
+    username = get_username(message)
+    products = await database.get_all_products(username)
+    await message.answer(format_products(products), parse_mode=ParseMode.HTML)
+    await message.answer("Введите артикул товара, который вы хотите удалить:", input_place_holder="Введите артикул")
+    await state.set_state(ProductActions.product_remove)
+
+
+@router.message(ProductActions.product_remove)
+async def remove_product(message: types.Message, state: FSMContext):
+    vc = message.text
+    name = await database.get_name_of_product(vc, get_username(message))
+    await database.delete_product(vc, get_username(message))
+    await message.answer(f"Товар по артикулу {vc} с именем\n"
+                         f"{name}\n"
+                         f"Успешно {html.bold('удален!')}", parse_mode=ParseMode.HTML)
+    await state.clear()
 
 
 def format_products(products):

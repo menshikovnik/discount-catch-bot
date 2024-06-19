@@ -8,7 +8,7 @@ DATABASE_CONFIG = {
     'user': 'postgres',
     'password': os.getenv("POSTGRES_PASSWORD"),
     'database': 'bot_db',
-    'host': 'localhost',
+    'host': 'postgres',
     'port': '5432'
 }
 

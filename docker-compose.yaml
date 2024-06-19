@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  frontend:
+    container_name: bot-frontend
+    image: 11zzard/tg-bot:latest
+
+  postgres:
+    container_name: postgres
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: 123321nm
+      POSTGRES_USER: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./assets/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./assets/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U test" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

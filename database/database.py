@@ -6,9 +6,9 @@ load_dotenv()
 
 DATABASE_CONFIG = {
     'user': 'postgres',
-    'password': 'test',
+    'password': os.getenv("POSTGRES_PASSWORD"),
     'database': 'bot_db',
-    'host': 'postgres',
+    'host': 'localhost',
     'port': '5432'
 }
 

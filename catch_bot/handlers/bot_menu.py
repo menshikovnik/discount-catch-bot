@@ -121,6 +121,9 @@ async def add_product_url(message: types.Message, state: FSMContext):
     except NoSuchElementException:
         await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
         await msg.answer("Введен неверный артикул, попробуйте еще раз")
+    except Exception as e:
+        await bot.send_message("Что-то пошло не так, попробуйте еще раз.")
+        print('Error', e)
     await state.clear()
 
 

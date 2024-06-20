@@ -6,6 +6,7 @@ from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from auto_chromedriver.driver import Driver
+from undetected_chromedriver.options import ChromeOptions
 
 
 def find_element_safe(driver, by, value):
@@ -29,7 +30,13 @@ class OzonParser:
     def __init__(self, art, is_for_art, url):
         self.is_for_art = is_for_art
         self.art = art
-        self.driver = Driver()
+        options = ChromeOptions()
+        options.add_argument(f"--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, "
+                             f"like Gecko) Chrome/126.0.0.0 Safari/537.36")
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-gpu')
+        self.driver = Driver(options=options)
         self.url = url
         if is_for_art:
             self.driver.get('https://ozon.com')
@@ -65,7 +72,7 @@ class OzonParser:
             self.driver.quit()
 
     def _parse_product_card(self):
-        html_price = find_element_safe(self.driver, By.CSS_SELECTOR, 'span.mm5_27.m5m_27.mn1_27')
+        html_price = find_element_safe(self.driver, By.CSS_SELECTOR, 'span.m5m_27.mm6_27.m1n_27')
         html_code = html_price.get_attribute('outerHTML')
         soup = BeautifulSoup(html_code, 'html.parser')
         price_string = soup.get_text()
@@ -73,7 +80,7 @@ class OzonParser:
         number_string = ''.join(match)
         self.price = int(number_string)
 
-        html_name = find_element_safe(self.driver, By.CSS_SELECTOR, 'h1.nm3_27.tsHeadline550Medium')
+        html_name = find_element_safe(self.driver, By.CSS_SELECTOR, 'h1.n3m_27.tsHeadline550Medium')
         self.product_name = html_name.get_attribute('innerText').strip()
 
         article_element = find_element_safe(self.driver, By.CSS_SELECTOR, 'button[data-widget="webDetailSKU"] '
